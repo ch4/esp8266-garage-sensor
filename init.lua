@@ -1,6 +1,10 @@
 timeout = 30 -- seconds to wait for connect before going to AP mode
 voltage = node.readvdd33()
-print("Voltage: " .. voltage)               
+print("Voltage: " .. voltage)  
+voltageFile = file.open('voltage.txt','w+')
+voltageFile.write(voltage)
+voltageFile.close()
+
 statuses = {[0]="Idle",
             [1]="Connecting",
             [2]="Wrong password",

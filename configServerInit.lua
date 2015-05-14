@@ -1,4 +1,4 @@
-apNamePrefix = "ConfigureMe" 
+apNamePrefix = "ESP8266" 
 
 apNetConfig = {ip      = "192.168.4.1", 
                netmask = "255.255.255.0",
