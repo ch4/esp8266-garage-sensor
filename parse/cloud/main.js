@@ -8,6 +8,10 @@ Parse.Cloud.job("TriggerAlerts", function(request, status) {
     });
 });
 
+function SendEmailNotification(){
+
+}
+
 function TriggerAlerts(sensorId, callback){
     //note: if there are a lot of unprocessed pings, this might take a while, so only call this from a cloud job
     if(sensorId){
@@ -116,9 +120,10 @@ function GetSensorByMac(sensorMac,callback){
 }
 
 Parse.Cloud.define("SensorPing", function(request, response) {
+    console.log(JSON.stringify(request));
     var parameters = request.params;
-    var voltage = parameter.voltage;
-    var mac = parameter.mac;
+    var voltage = parameters.voltage;
+    var mac = parameters.mac;
     
     var Ping = Parse.Object.extend("Pings");
     var newPing = new Ping();
@@ -139,4 +144,21 @@ Parse.Cloud.define("SensorPing", function(request, response) {
             response.error();
         }
     });
+});
+
+Parse.Cloud.afterSave("Pings", function(request) {
+//  query = new Parse.Query("Post");
+//  query.get(request.object.get("post").id, {
+//    success: function(post) {
+//      post.increment("comments");
+//      post.save();
+//    },
+//    error: function(error) {
+//      console.error("Got an error " + error.code + " : " + error.message);
+//    }
+//  });
+    
+    console.log(request);
+    var savedPing = request.object;
+    GetSensorByMac(object.mac,function(sensorObject){});
 });
