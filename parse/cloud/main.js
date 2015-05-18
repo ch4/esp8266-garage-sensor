@@ -1,4 +1,28 @@
+var express = require('express');
 var _ = require('underscore');
+var querystring = require('querystring');
+
+/**
+ * Create an express application instance
+ */
+var app = express();
+
+///**
+// * Create a Parse ACL which prohibits public access.  This will be used
+// *   in several places throughout the application, to explicitly protect
+// *   Parse User, TokenRequest, and TokenStorage objects.
+// */
+//var restrictedAcl = new Parse.ACL();
+//restrictedAcl.setPublicReadAccess(false);
+//restrictedAcl.setPublicWriteAccess(false);
+
+/**
+ * Global app configuration section
+ */
+//app.set('views', 'cloud/views');  // Specify the folder to find templates
+app.set('view engine', 'ejs');    // Set the template engine
+app.use(express.bodyParser());    // Middleware for reading request body
+
 
 Parse.Cloud.job("TriggerAlerts", function(request, status) {
     // Set up to modify user data
@@ -93,6 +117,7 @@ function TriggerAlerts(sensorId, callback){
 }
 
 function GetSensorByMac(sensorMac,callback){
+    console.log('sensorMac: ' + sensorMac);
     var Sensor = Parse.Object.extend("Sensors");
     var sensorQuery = new Parse.Query(Sensor);
     sensorQuery.equalTo("mac", sensorMac);
@@ -100,12 +125,6 @@ function GetSensorByMac(sensorMac,callback){
     sensorQuery.limit(2);
     sensorQuery.find({
       success: function(results) {
-        //alert("Successfully retrieved " + results.length + " scores.");
-        // Do something with the returned Parse.Object values
-//        for (var i = 0; i < results.length; i++) { 
-//          var object = results[i];
-//          alert(object.id + ' - ' + object.get('playerName'));
-//        }
           if(results.length > 0){
             callback(results[0]);   
           } else {
@@ -147,18 +166,44 @@ Parse.Cloud.define("SensorPing", function(request, response) {
 });
 
 Parse.Cloud.afterSave("Pings", function(request) {
-//  query = new Parse.Query("Post");
-//  query.get(request.object.get("post").id, {
-//    success: function(post) {
-//      post.increment("comments");
-//      post.save();
-//    },
-//    error: function(error) {
-//      console.error("Got an error " + error.code + " : " + error.message);
-//    }
-//  });
-    
-    console.log(request);
-    var savedPing = request.object;
-    GetSensorByMac(object.mac,function(sensorObject){});
+    GetSensorByMac(request.object.get('mac'),function(sensorObject){
+        console.log('found: ' + JSON.stringify(sensorObject));
+    });
 });
+
+//app.post('/sensor/ping', function(request, response) {
+//    console.log(request.body);
+//
+//    response.json({});
+//});
+
+app.post('/sensor/:mac/voltage/:voltage', function(request, response) {
+    var parameters = request.params;
+    var voltage = parameters.voltage;
+    var mac = parameters.mac;
+
+    var Ping = Parse.Object.extend("Pings");
+    var newPing = new Ping();
+
+    //newPing.set("time", parameters.time);
+    newPing.set("voltage", voltage);
+    newPing.set("mac", mac);
+
+    newPing.save(null, {
+        success: function(result) {
+            // Execute any logic that should take place after the object is saved.
+            response.success();
+        },
+        error: function(result, error) {
+            // Execute any logic that should take place if the save fails.
+            // error is a Parse.Error with an error code and message.
+            alert('Failed to create new object, with error code: ' + error.message);
+            response.error();
+        }
+    });
+
+    response.json({});
+});
+
+// Attach the Express app to your Cloud Code
+app.listen();
