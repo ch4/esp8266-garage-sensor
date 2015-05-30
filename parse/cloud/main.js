@@ -33,7 +33,7 @@ Parse.Cloud.job("TriggerAlerts", function(request, status) {
     });
 });
 
-function SendSmsNotification(targetNumber, message, callback) {
+function SendPlivoSms(targetNumber, message, callback) {
     Parse.Config.get().then(function(config) {
         var plivoId = config.get("PLIVO_ID");
         var plivoToken = config.get("PLIVO_TOKEN");
@@ -51,6 +51,28 @@ function SendSmsNotification(targetNumber, message, callback) {
                 "dst": targetNumber,
                 "text": message
             },
+            success: function(httpResponse) {
+                callback();
+            },
+            error: function(httpResponse) {
+                callback();
+            }
+        });
+    }, function(error) {
+        // Something went wrong (e.g. request timed out)
+        callback();
+    });
+}
+
+function SendNexmoSms(targetNumber, message, callback) {
+    Parse.Config.get().then(function(config) {
+        var nexmoKey = config.get("NEXMO_KEY");
+        var nexmoSecret = config.get("NEXMO_SECRET");
+        var nexmoNumber = config.get("NEXMO_NUMBER");
+
+        Parse.Cloud.httpRequest({
+            uri: 'https://rest.nexmo.com/sms/json?api_key=' + nexmoKey + '&api_secret=' + nexmoSecret + '&from=' + nexmoNumber + '&to=' + targetNumber + '&text=' + message,
+            method: "GET",
             success: function(httpResponse) {
                 callback();
             },
@@ -201,7 +223,7 @@ function GetListenersByMac(sensorMac, callback) {
     var Listener = Parse.Object.extend("Listeners");
     var listenerQuery = new Parse.Query(Listener);
     listenerQuery.equalTo("sensorMac", sensorMac);
-    
+
     sensorQuery.find({
         success: function(results) {
             callback(results);
@@ -245,19 +267,19 @@ Parse.Cloud.afterSave("Pings", function(request) {
     GetListenersByMac(request.object.get('mac'), function(listenerObjects) {
         console.log('found: ' + JSON.stringify(listenerObjects));
         var count = listenerObjects.length;
-        
-        function asyncCallback(){
+
+        function asyncCallback() {
             count = count - 1;
-            if(count < 1){
+            if (count < 1) {
                 //done   
                 return;
             }
         }
-        
-        _.each(listenerObjects, function(listener){
+
+        _.each(listenerObjects, function(listener) {
             var email = listener.get('email');
             var garagemessage = 'GARAGE DOOR IS OPEN';
-            SendEmailNotification(email,garagemessage,garagemessage,function(){
+            SendEmailNotification(email, garagemessage, garagemessage, function() {
                 asyncCallback();
             });
         });
