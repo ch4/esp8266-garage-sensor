@@ -224,7 +224,7 @@ function GetListenersByMac(sensorMac, callback) {
     var listenerQuery = new Parse.Query(Listener);
     listenerQuery.equalTo("sensorMac", sensorMac);
 
-    sensorQuery.find({
+    listenerQuery.find({
         success: function(results) {
             callback(results);
         },
@@ -308,13 +308,13 @@ app.post('/sensor/:mac/voltage/:voltage', function(request, response) {
     newPing.save(null, {
         success: function(result) {
             // Execute any logic that should take place after the object is saved.
-            response.success();
+            response.json();
         },
         error: function(result, error) {
             // Execute any logic that should take place if the save fails.
             // error is a Parse.Error with an error code and message.
             alert('Failed to create new object, with error code: ' + error.message);
-            response.error();
+            response.json();
         }
     });
 
